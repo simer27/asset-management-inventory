@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Inventory.API.Domain.Entities;
 using AssetManagement.Inventory.API.DTOs.Area;
+using AssetManagement.Inventory.API.DTOs.Item;
 using AssetManagement.Inventory.API.Infrastructure.Data;
 using AssetManagement.Inventory.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,31 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 })
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<ItemResponseDto>> GetItemsByAreaAsync(Guid areaId)
+        {
+            var areaExists = await _context.Areas.AnyAsync(a => a.Id == areaId);
+
+            if (!areaExists)
+                throw new Exception("Área não encontrada.");
+
+            return await _context.Items
+                .Where(i => i.AreaId == areaId)
+                .Include(i => i.Area)
+                .Select(i => new ItemResponseDto
+                {
+                    Id = i.Id,
+                    Name = i.Name,
+                    Description = i.Description,
+                    Quantity = i.Quantity,
+                    AreaId = i.AreaId,
+                    AreaName = i.Area.Name,
+                    CreatedAt = i.CreatedAt,
+                    UpdatedAt = i.UpdatedAt
+                })
+                .ToListAsync();
+        }
+
     }
 }
 

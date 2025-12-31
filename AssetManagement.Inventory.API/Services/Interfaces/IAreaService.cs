@@ -1,5 +1,5 @@
-﻿using AssetManagement.Inventory.API.Domain.DTOs.Area;
-using AssetManagement.Inventory.API.DTOs.Area;
+﻿using AssetManagement.Inventory.API.DTOs.Area;
+using AssetManagement.Inventory.API.DTOs.Item;
 
 namespace AssetManagement.Inventory.API.Services.Interfaces
 {
@@ -7,5 +7,7 @@ namespace AssetManagement.Inventory.API.Services.Interfaces
     {
         Task<AreaResponseDto> CreateAsync(CreateAreaDto dto);
         Task<IEnumerable<AreaResponseDto>> GetAllAsync();
+        Task<IEnumerable<ItemResponseDto>> GetItemsByAreaAsync(Guid areaId);
+
     }
 }
