@@ -4,6 +4,7 @@ using AssetManagement.Inventory.API.Services.Interfaces;
 using AssetManagement.Inventory.API.Services.Implementations;
 
 
+
 namespace AssetManagement.Inventory.API
 {
     public class Program
@@ -14,6 +15,8 @@ namespace AssetManagement.Inventory.API
 
             // Add services to the container.
             builder.Services.AddScoped<IAreaService, AreaService>();
+            builder.Services.AddScoped<IItemService, ItemService>();
+
 
 
             builder.Services.AddControllers();
