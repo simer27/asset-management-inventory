@@ -1,5 +1,8 @@
 using AssetManagement.Inventory.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using AssetManagement.Inventory.API.Services.Interfaces;
+using AssetManagement.Inventory.API.Services.Implementations;
+
 
 namespace AssetManagement.Inventory.API
 {
@@ -10,6 +13,8 @@ namespace AssetManagement.Inventory.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddScoped<IAreaService, AreaService>();
+
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
