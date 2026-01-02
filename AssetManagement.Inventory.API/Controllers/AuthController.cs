@@ -30,5 +30,42 @@ namespace AssetManagement.Inventory.API.Controllers
             var result = await _authService.LoginAsync(dto);
             return Ok(result);
         }
+
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(
+        [FromQuery] string userId,
+        [FromQuery] string token)
+        {
+            await _authService.ConfirmEmailAsync(userId, token);
+            return Ok("E-mail confirmado com sucesso.");
+        }
+
+
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation(
+        [FromBody] ResendConfirmationDto dto)
+        {
+            await _authService.ResendConfirmationEmailAsync(dto.Email);
+            return Ok("E-mail de confirmação reenviado.");
+        }
+
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            await _authService.ForgotPasswordAsync(dto);
+            return Ok("E-mail de recuperação enviado.");
+        }
+
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordDto dto)
+        {
+            await _authService.ResetPasswordAsync(dto);
+            return Ok("Senha alterada com sucesso.");
+        }
+
+
     }
 }

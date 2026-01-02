@@ -8,6 +8,10 @@ namespace AssetManagement.Inventory.API.Services.Auth.Interfaces
         Task<AuthResponseDto> LoginAsync(LoginRequestDto dto);
         Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto);
         Task LogoutAsync(string refreshToken);
+        Task ConfirmEmailAsync(string userId, string token);
+        Task ResendConfirmationEmailAsync(string email);
+        Task ForgotPasswordAsync(ForgotPasswordDto dto);
+        Task ResetPasswordAsync(ResetPasswordDto dto);
 
     }
 }

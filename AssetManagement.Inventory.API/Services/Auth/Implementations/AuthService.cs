@@ -177,5 +177,80 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             await _context.SaveChangesAsync();
         }
 
+        public async Task ConfirmEmailAsync(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                throw new Exception("Usuário não encontrado.");
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+
+            if (!result.Succeeded)
+                throw new Exception("Token inválido ou expirado.");
+        }
+
+
+        public async Task ResendConfirmationEmailAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return;
+
+            if (user.EmailConfirmed)
+                return;
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            var link =
+                $"https://localhost:4200/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+
+            await _emailService.SendAsync(
+                user.Email!,
+                "Confirmação de cadastro",
+                $"<p>Confirme seu cadastro clicando <a href='{link}'>aqui</a></p>"
+            );
+        }
+
+
+        public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            if (user == null || !user.EmailConfirmed)
+                return; // segurança
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var link =
+                $"https://localhost:4200/reset-password?email={user.Email}&token={Uri.EscapeDataString(token)}";
+
+            await _emailService.SendAsync(
+                user.Email!,
+                "Recuperação de senha",
+                $"<p>Para redefinir sua senha, clique <a href='{link}'>aqui</a></p>"
+            );
+        }
+
+
+        public async Task ResetPasswordAsync(ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            if (user == null)
+                throw new Exception("Usuário não encontrado.");
+
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                dto.Token,
+                dto.NewPassword
+            );
+
+            if (!result.Succeeded)
+                throw new Exception("Token inválido ou expirado.");
+        }
+
+
     }
 }
