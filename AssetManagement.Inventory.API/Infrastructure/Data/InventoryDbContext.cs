@@ -1,10 +1,13 @@
 ﻿using AssetManagement.Inventory.API.Domain.Entities;
+using AssetManagement.Inventory.API.Domain.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+
 
 namespace AssetManagement.Inventory.API.Infrastructure.Data
 {
-    public class InventoryDbContext : DbContext
+    public class InventoryDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
     {
         public InventoryDbContext(DbContextOptions<InventoryDbContext> options) : base(options)
         {
@@ -12,6 +15,8 @@ namespace AssetManagement.Inventory.API.Infrastructure.Data
 
         public DbSet<Area> Areas => Set<Area>();
         public DbSet<Item> Items => Set<Item>();
+        public DbSet<ApplicationUser> Users { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
