@@ -5,16 +5,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace AssetManagement.Inventory.API.Controllers
 {
     [ApiController]
-    [Route("api/Auth")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-
         private readonly IAuthService _authService;
 
         public AuthController(IAuthService authService)
         {
             _authService = authService;
         }
+
+        // 🔹 REGISTRO
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -22,5 +23,12 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok("Cadastro realizado. Verifique seu e-mail.");
         }
 
+        // 🔹 LOGIN (JWT)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
+        {
+            var result = await _authService.LoginAsync(dto);
+            return Ok(result);
+        }
     }
 }
