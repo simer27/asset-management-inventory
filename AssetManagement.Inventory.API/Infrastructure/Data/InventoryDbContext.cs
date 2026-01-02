@@ -16,6 +16,8 @@ namespace AssetManagement.Inventory.API.Infrastructure.Data
         public DbSet<Area> Areas => Set<Area>();
         public DbSet<Item> Items => Set<Item>();
         public DbSet<ApplicationUser> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,6 +44,16 @@ namespace AssetManagement.Inventory.API.Infrastructure.Data
                       .WithMany(a => a.Items)
                       .HasForeignKey(i => i.AreaId);
             });
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.HasOne(r => r.User)
+                      .WithMany()
+                      .HasForeignKey(r => r.UserId);
+            });
+
         }
 
     }

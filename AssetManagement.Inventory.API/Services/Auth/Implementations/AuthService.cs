@@ -1,8 +1,10 @@
 ﻿using AssetManagement.Inventory.API.Domain.Entities.Identity;
 using AssetManagement.Inventory.API.DTOs.Auth;
+using AssetManagement.Inventory.API.Infrastructure.Data;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
 using AssetManagement.Inventory.API.Services.Email.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,15 +18,16 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
+        private readonly InventoryDbContext _context;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
-            IEmailService emailService, IConfiguration configuration)
+            IEmailService emailService, IConfiguration configuration, InventoryDbContext context)
         {
             _userManager = userManager;
             _emailService = emailService;
             _configuration = configuration;
-
+            _context = context;
         }
 
         public async Task RegisterAsync(RegisterDto dto)
@@ -64,26 +67,34 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-                throw new UnauthorizedAccessException("Credenciais inválidas");
+                throw new UnauthorizedAccessException("Invalid credentials");
 
-            var token = await GenerateJwtAsync(user);
-            var refreshToken = Guid.NewGuid().ToString();
+            if (!user.EmailConfirmed)
+                throw new UnauthorizedAccessException("Email not confirmed");
+
+            var accessToken = await GenerateJwtAsync(user);
+
+            var refreshToken = new RefreshToken
+            {
+                Token = Guid.NewGuid().ToString(),
+                UserId = user.Id,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
 
             return new AuthResponseDto
             {
-                AccessToken = token,
-                RefreshToken = refreshToken,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken.Token,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(
                     int.Parse(_configuration["Jwt:ExpiresInMinutes"]!)
                 )
             };
         }
 
-        public Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
-        {
-            // Implementaremos na Etapa C
-            throw new NotImplementedException();
-        }
+
 
         private async Task<string> GenerateJwtAsync(ApplicationUser user)
         {
@@ -115,6 +126,55 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto)
+        {
+            var storedToken = await _context.RefreshTokens
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r =>
+                    r.Token == dto.RefreshToken &&
+                    !r.IsRevoked &&
+                    r.ExpiresAt > DateTime.UtcNow);
+
+            if (storedToken == null)
+                throw new UnauthorizedAccessException("Invalid or expired refresh token");
+
+            // 🔥 Rotate token
+            storedToken.IsRevoked = true;
+
+            var newRefreshToken = new RefreshToken
+            {
+                Token = Guid.NewGuid().ToString(),
+                UserId = storedToken.UserId,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+
+            _context.RefreshTokens.Add(newRefreshToken);
+            await _context.SaveChangesAsync();
+
+            var newAccessToken = await GenerateJwtAsync(storedToken.User);
+
+            return new RefreshTokenResponseDto
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken.Token,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(
+                    int.Parse(_configuration["Jwt:ExpiresInMinutes"]!)
+                )
+            };
+        }
+
+        public async Task LogoutAsync(string refreshToken)
+        {
+            var token = await _context.RefreshTokens
+                .FirstOrDefaultAsync(r => r.Token == refreshToken);
+
+            if (token == null)
+                return;
+
+            token.IsRevoked = true;
+            await _context.SaveChangesAsync();
         }
 
     }
