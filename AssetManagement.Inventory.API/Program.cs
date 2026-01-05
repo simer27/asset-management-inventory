@@ -1,4 +1,5 @@
-﻿using AssetManagement.Inventory.API.Domain.Entities.Identity;
+﻿using AssetManagement.Inventory.API.Domain.Constants;
+using AssetManagement.Inventory.API.Domain.Entities.Identity;
 using AssetManagement.Inventory.API.Infrastructure.Data;
 using AssetManagement.Inventory.API.Infrastructure.Seed;
 using AssetManagement.Inventory.API.Services.Auth.Implementations;
@@ -40,7 +41,46 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Informe o token JWT no formato: Bearer {seu_token}"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireMaster", policy =>
+        policy.RequireRole(Roles.Master));
+
+    options.AddPolicy("RequireAdmin", policy =>
+        policy.RequireRole(Roles.Admin, Roles.Master));
+
+    options.AddPolicy("RequireUser", policy =>
+        policy.RequireRole(Roles.User, Roles.Admin, Roles.Master));
+});
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
@@ -67,7 +107,7 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-// 🔥 SEED CORRETO
+
 await IdentitySeed.SeedAsync(app.Services);
 
 if (app.Environment.IsDevelopment())

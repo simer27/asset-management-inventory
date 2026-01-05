@@ -13,5 +13,6 @@ namespace AssetManagement.Inventory.API.Services.Auth.Interfaces
         Task ForgotPasswordAsync(ForgotPasswordDto dto);
         Task ResetPasswordAsync(ResetPasswordDto dto);
 
+
     }
 }

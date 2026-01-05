@@ -43,14 +43,11 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             if (!result.Succeeded)
                 throw new Exception("Erro ao criar usuário");
 
-            // 🔐 GERAR TOKEN DE CONFIRMAÇÃO
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            // 🔗 GERAR LINK (frontend)
             var confirmationLink =
                 $"https://localhost:4200/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
-            // 📧 ENVIAR EMAIL
             await _emailService.SendAsync(
                 user.Email!,
                 "Confirmação de cadastro",
@@ -140,7 +137,7 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             if (storedToken == null)
                 throw new UnauthorizedAccessException("Invalid or expired refresh token");
 
-            // 🔥 Rotate token
+            
             storedToken.IsRevoked = true;
 
             var newRefreshToken = new RefreshToken
@@ -165,17 +162,6 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             };
         }
 
-        public async Task LogoutAsync(string refreshToken)
-        {
-            var token = await _context.RefreshTokens
-                .FirstOrDefaultAsync(r => r.Token == refreshToken);
-
-            if (token == null)
-                return;
-
-            token.IsRevoked = true;
-            await _context.SaveChangesAsync();
-        }
 
         public async Task ConfirmEmailAsync(string userId, string token)
         {
@@ -219,7 +205,7 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             var user = await _userManager.FindByEmailAsync(dto.Email);
 
             if (user == null || !user.EmailConfirmed)
-                return; // segurança
+                return;
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
@@ -249,6 +235,20 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
 
             if (!result.Succeeded)
                 throw new Exception("Token inválido ou expirado.");
+        }
+
+        public async Task LogoutAsync(string refreshToken)
+        {
+            var storedToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt =>
+                    rt.Token == refreshToken &&
+                    !rt.IsRevoked);
+
+            if (storedToken == null)
+                return;
+
+            storedToken.IsRevoked = true;
+            await _context.SaveChangesAsync();
         }
 
 

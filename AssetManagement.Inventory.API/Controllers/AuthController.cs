@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Inventory.API.DTOs.Auth;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AssetManagement.Inventory.API.Controllers
@@ -15,7 +16,6 @@ namespace AssetManagement.Inventory.API.Controllers
             _authService = authService;
         }
 
-        // 🔹 REGISTRO
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -23,7 +23,6 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok("Cadastro realizado. Verifique seu e-mail.");
         }
 
-        // 🔹 LOGIN (JWT)
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
@@ -66,6 +65,13 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok("Senha alterada com sucesso.");
         }
 
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout([FromBody] LogoutDto dto)
+        {
+            await _authService.LogoutAsync(dto.RefreshToken);
+            return Ok("Logout realizado com sucesso.");
+        }
 
     }
 }

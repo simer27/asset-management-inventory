@@ -1,4 +1,5 @@
-﻿using AssetManagement.Inventory.API.Domain.Entities.Identity;
+﻿using AssetManagement.Inventory.API.Domain.Constants;
+using AssetManagement.Inventory.API.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 
 namespace AssetManagement.Inventory.API.Infrastructure.Seed
@@ -9,27 +10,19 @@ namespace AssetManagement.Inventory.API.Infrastructure.Seed
         {
             using var scope = serviceProvider.CreateScope();
 
-            var roleManager = scope.ServiceProvider
-                .GetRequiredService<RoleManager<ApplicationRole>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-            var userManager = scope.ServiceProvider
-                .GetRequiredService<UserManager<ApplicationUser>>();
-
-            // 1️⃣ Roles
-            var roles = new[] { "Master", "User" };
+            var roles = new[] { Roles.Master, Roles.Admin, Roles.User };
 
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {
-                    await roleManager.CreateAsync(new ApplicationRole
-                    {
-                        Name = role
-                    });
+                    await roleManager.CreateAsync(new ApplicationRole { Name = role });
                 }
             }
 
-            // 2️⃣ Usuário Master
             var masterEmail = "admin@gestaopatrimonial.com";
 
             var masterUser = await userManager.FindByEmailAsync(masterEmail);
@@ -48,7 +41,7 @@ namespace AssetManagement.Inventory.API.Infrastructure.Seed
 
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(masterUser, "Master");
+                    await userManager.AddToRoleAsync(masterUser, Roles.Master);
                 }
             }
         }

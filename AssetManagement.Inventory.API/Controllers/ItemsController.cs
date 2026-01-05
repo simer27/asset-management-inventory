@@ -1,9 +1,11 @@
 ﻿using AssetManagement.Inventory.API.DTOs.Item;
 using AssetManagement.Inventory.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AssetManagement.Inventory.API.Controllers
 {
+    [Authorize(Policy = "RequireAdmin")]
     [ApiController]
     [Route("api/items")]
     public class ItemsController : ControllerBase
@@ -29,6 +31,7 @@ namespace AssetManagement.Inventory.API.Controllers
             }
         }
 
+        [Authorize(Policy = "RequireUser")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
