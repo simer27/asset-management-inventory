@@ -1,6 +1,7 @@
 ﻿using AssetManagement.Inventory.API.Domain.Constants;
 using AssetManagement.Inventory.API.Domain.Entities.Identity;
 using AssetManagement.Inventory.API.Infrastructure.Data;
+using AssetManagement.Inventory.API.Infrastructure.Middlewares;
 using AssetManagement.Inventory.API.Infrastructure.Seed;
 using AssetManagement.Inventory.API.Services.Auth.Implementations;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
@@ -107,6 +108,7 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionMiddleware>();
 
 await IdentitySeed.SeedAsync(app.Services);
 

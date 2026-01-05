@@ -73,5 +73,13 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok("Logout realizado com sucesso.");
         }
 
+        [HttpPost("admin/revoke-user-tokens/{userId}")]
+        [Authorize(Policy = "RequireAdmin")]
+        public async Task<IActionResult> RevokeUserTokens(Guid userId)
+        {
+            await _authService.RevokeAllTokensAsync(userId);
+            return Ok("Todos os tokens do usuário foram revogados.");
+        }
+
     }
 }

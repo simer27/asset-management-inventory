@@ -64,10 +64,10 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-                throw new UnauthorizedAccessException("Invalid credentials");
+                throw new UnauthorizedAccessException("Credênciais inválidas");
 
             if (!user.EmailConfirmed)
-                throw new UnauthorizedAccessException("Email not confirmed");
+                throw new UnauthorizedAccessException("Email não confirmado.");
 
             var accessToken = await GenerateJwtAsync(user);
 
@@ -135,7 +135,7 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
                     r.ExpiresAt > DateTime.UtcNow);
 
             if (storedToken == null)
-                throw new UnauthorizedAccessException("Invalid or expired refresh token");
+                throw new UnauthorizedAccessException("Invalido ou expirado o refresh token");
 
             
             storedToken.IsRevoked = true;
@@ -235,6 +235,8 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
 
             if (!result.Succeeded)
                 throw new Exception("Token inválido ou expirado.");
+
+            await RevokeAllTokensAsync(user.Id);
         }
 
         public async Task LogoutAsync(string refreshToken)
@@ -247,10 +249,25 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             if (storedToken == null)
                 return;
 
-            storedToken.IsRevoked = true;
-            await _context.SaveChangesAsync();
+            await RevokeAllTokensAsync(storedToken.UserId);
         }
 
+        public async Task RevokeAllTokensAsync(Guid userId)
+        {
+            var tokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && !rt.IsRevoked)
+                .ToListAsync();
+
+            if (!tokens.Any())
+                return;
+
+            foreach (var token in tokens)
+            {
+                token.IsRevoked = true;
+            }
+
+            await _context.SaveChangesAsync();
+        }
 
     }
 }

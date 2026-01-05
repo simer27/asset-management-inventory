@@ -12,7 +12,7 @@ namespace AssetManagement.Inventory.API.Services.Auth.Interfaces
         Task ResendConfirmationEmailAsync(string email);
         Task ForgotPasswordAsync(ForgotPasswordDto dto);
         Task ResetPasswordAsync(ResetPasswordDto dto);
-
+        Task RevokeAllTokensAsync(Guid userId);
 
     }
 }
