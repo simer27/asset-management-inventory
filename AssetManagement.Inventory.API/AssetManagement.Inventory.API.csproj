@@ -25,6 +25,10 @@
 
   <ItemGroup>
     <Folder Include="Infrastructure\Mappings\" />
+    <Folder Include="wwwroot\Uploads\Environments\" />
+    <Folder Include="wwwroot\Uploads\Invoices\" />
+    <Folder Include="wwwroot\Uploads\Documents\" />
+    <Folder Include="wwwroot\Uploads\Receipts\" />
   </ItemGroup>
 
 </Project>

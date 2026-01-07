@@ -41,6 +41,51 @@ namespace AssetManagement.Inventory.API.Migrations
                     b.ToTable("Areas");
                 });
 
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Environments");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EnvironmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EnvironmentId");
+
+                    b.ToTable("EnvironmentImages");
+                });
+
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Identity.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -192,11 +237,17 @@ namespace AssetManagement.Inventory.API.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("NotaFiscalCaminho")
+                        .HasColumnType("text");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("ValorMedio")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -308,6 +359,17 @@ namespace AssetManagement.Inventory.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentImage", b =>
+                {
+                    b.HasOne("AssetManagement.Inventory.API.Domain.Entities.EnvironmentEntity", "Environment")
+                        .WithMany("Imagens")
+                        .HasForeignKey("EnvironmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Environment");
+                });
+
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Identity.RefreshToken", b =>
                 {
                     b.HasOne("AssetManagement.Inventory.API.Domain.Entities.Identity.ApplicationUser", "User")
@@ -384,6 +446,11 @@ namespace AssetManagement.Inventory.API.Migrations
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Area", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentEntity", b =>
+                {
+                    b.Navigation("Imagens");
                 });
 #pragma warning restore 612, 618
         }

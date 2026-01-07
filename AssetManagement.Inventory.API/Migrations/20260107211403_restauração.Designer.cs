@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AssetManagement.Inventory.API.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
-    [Migration("20260102013636_InitialIdentitySchema")]
-    partial class InitialIdentitySchema
+    [Migration("20260107211403_restauração")]
+    partial class restauração
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +42,51 @@ namespace AssetManagement.Inventory.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Areas");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Environments");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("EnvironmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EnvironmentId");
+
+                    b.ToTable("EnvironmentImages");
                 });
 
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Identity.ApplicationRole", b =>
@@ -146,6 +191,35 @@ namespace AssetManagement.Inventory.API.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Identity.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Item", b =>
                 {
                     b.Property<Guid>("Id")
@@ -166,11 +240,17 @@ namespace AssetManagement.Inventory.API.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("NotaFiscalCaminho")
+                        .HasColumnType("text");
+
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("ValorMedio")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -282,6 +362,28 @@ namespace AssetManagement.Inventory.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentImage", b =>
+                {
+                    b.HasOne("AssetManagement.Inventory.API.Domain.Entities.EnvironmentEntity", "Environment")
+                        .WithMany("Imagens")
+                        .HasForeignKey("EnvironmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Environment");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Identity.RefreshToken", b =>
+                {
+                    b.HasOne("AssetManagement.Inventory.API.Domain.Entities.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Item", b =>
                 {
                     b.HasOne("AssetManagement.Inventory.API.Domain.Entities.Area", "Area")
@@ -347,6 +449,11 @@ namespace AssetManagement.Inventory.API.Migrations
             modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Area", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.EnvironmentEntity", b =>
+                {
+                    b.Navigation("Imagens");
                 });
 #pragma warning restore 612, 618
         }

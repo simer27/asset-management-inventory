@@ -3,6 +3,7 @@ using AssetManagement.Inventory.API.Domain.Entities.Identity;
 using AssetManagement.Inventory.API.Infrastructure.Data;
 using AssetManagement.Inventory.API.Infrastructure.Middlewares;
 using AssetManagement.Inventory.API.Infrastructure.Middlewares.AssetManagement.Inventory.API.Middlewares;
+using AssetManagement.Inventory.API.Infrastructure.Seed;
 using AssetManagement.Inventory.API.Services.Auth.Implementations;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
 using AssetManagement.Inventory.API.Services.Email.Implementations;
@@ -120,6 +121,7 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
+// await IdentitySeed.SeedAsync(app.Services); //se tiver que rodar para gerar as roles e o primeiro usuário Master
 
 if (app.Environment.IsDevelopment())
 {
@@ -135,5 +137,5 @@ app.UseAuthentication();
 app.UseAuthorization(); 
 
 app.MapControllers();
-
+app.UseStaticFiles();
 app.Run();

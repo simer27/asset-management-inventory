@@ -12,6 +12,11 @@
 
         public int Quantity { get; set; }
 
+        public decimal? ValorMedio { get; set; }
+
+        public string? NotaFiscalCaminho { get; set; }
+
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
