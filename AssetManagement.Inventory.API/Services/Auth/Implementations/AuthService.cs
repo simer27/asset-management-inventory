@@ -1,5 +1,7 @@
-﻿using AssetManagement.Inventory.API.Domain.Entities.Identity;
+﻿using AssetManagement.Inventory.API.Domain.Constants;
+using AssetManagement.Inventory.API.Domain.Entities.Identity;
 using AssetManagement.Inventory.API.DTOs.Auth;
+using AssetManagement.Inventory.API.Exceptions;
 using AssetManagement.Inventory.API.Infrastructure.Data;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
 using AssetManagement.Inventory.API.Services.Email.Interfaces;
@@ -43,10 +45,13 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             if (!result.Succeeded)
                 throw new Exception("Erro ao criar usuário");
 
+            await _userManager.AddToRoleAsync(user, Roles.User);
+
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
             var confirmationLink =
-                $"https://localhost:4200/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+                $"https://localhost:7029/api/auth/confirm-email?userId={user.Id}&token={token}";
+
 
             await _emailService.SendAsync(
                 user.Email!,
@@ -64,7 +69,8 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
-                throw new UnauthorizedAccessException("Credênciais inválidas");
+                throw new AppException("Credenciais inválidas", 401);
+
 
             if (!user.EmailConfirmed)
                 throw new UnauthorizedAccessException("Email não confirmado.");
@@ -97,6 +103,9 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
         {
             var roles = await _userManager.GetRolesAsync(user);
 
+            if (!roles.Any())
+                throw new Exception("Usuário sem roles atribuídas");
+
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -104,7 +113,8 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            claims.AddRange(roles.Select(role => new Claim("role", role)));
+
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)
@@ -168,13 +178,16 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
-                throw new Exception("Usuário não encontrado.");
+                throw new AppException("Usuário não encontrado");
 
-            var result = await _userManager.ConfirmEmailAsync(user, token);
+            var decodedToken = Uri.UnescapeDataString(token);
+
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
 
             if (!result.Succeeded)
-                throw new Exception("Token inválido ou expirado.");
+                throw new AppException("Token inválido ou expirado", 400);
         }
+
 
 
         public async Task ResendConfirmationEmailAsync(string email)
@@ -190,7 +203,8 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
             var link =
-                $"https://localhost:4200/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+                $"https://localhost:7029/api/auth/confirm-email?userId={user.Id}&token={token}";
+
 
             await _emailService.SendAsync(
                 user.Email!,

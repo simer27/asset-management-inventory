@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AssetManagement.Inventory.API.Controllers
 {
-    [Authorize(Policy = "RequireAdmin")]
+    [Authorize]
     [ApiController]
     [Route("api/items")]
     public class ItemsController : ControllerBase
@@ -17,6 +17,7 @@ namespace AssetManagement.Inventory.API.Controllers
             _itemService = itemService;
         }
 
+        [Authorize(Roles = "Admin, Master")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateItemDto dto)
         {
@@ -31,7 +32,7 @@ namespace AssetManagement.Inventory.API.Controllers
             }
         }
 
-        [Authorize(Policy = "RequireUser")]
+        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -39,6 +40,7 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok(items);
         }
 
+       
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {

@@ -3,54 +3,76 @@ using System.Text.Json;
 
 namespace AssetManagement.Inventory.API.Infrastructure.Middlewares
 {
-    public class ExceptionMiddleware
+    
+    using global::AssetManagement.Inventory.API.Exceptions;
+    using Microsoft.IdentityModel.Tokens;
+    using System.Net;
+    using System.Text.Json;
+
+    namespace AssetManagement.Inventory.API.Middlewares
     {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<ExceptionMiddleware> _logger;
-
-        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+        public class ExceptionMiddleware
         {
-            _next = next;
-            _logger = logger;
-        }
+            private readonly RequestDelegate _next;
 
-        public async Task InvokeAsync(HttpContext context)
-        {
-            try
+            public ExceptionMiddleware(RequestDelegate next)
             {
-                await _next(context);
+                _next = next;
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Erro não tratado");
 
-                await HandleExceptionAsync(context, ex);
+            public async Task InvokeAsync(HttpContext context)
+            {
+                try
+                {
+                    await _next(context);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        status = 401,
+                        error = ex.Message
+                    });
+                }
+                catch (SecurityTokenException)
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        status = 401,
+                        error = "Token inválido ou expirado"
+                    });
+                }
+                catch (AppException ex)
+                {
+                    context.Response.StatusCode = ex.StatusCode;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        status = ex.StatusCode,
+                        error = ex.Message
+                    });
+                }
+                catch (Exception)
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        status = 500,
+                        error = "Erro interno no servidor"
+                    });
+                }
             }
-        }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {
-            context.Response.ContentType = "application/json";
-
-            var statusCode = exception switch
-            {
-                UnauthorizedAccessException => HttpStatusCode.Unauthorized,
-                KeyNotFoundException => HttpStatusCode.NotFound,
-                ArgumentException => HttpStatusCode.BadRequest,
-                _ => HttpStatusCode.InternalServerError
-            };
-
-            context.Response.StatusCode = (int)statusCode;
-
-            var response = new
-            {
-                status = context.Response.StatusCode,
-                error = exception.Message
-            };
-
-            return context.Response.WriteAsync(
-                JsonSerializer.Serialize(response)
-            );
         }
     }
+
 }

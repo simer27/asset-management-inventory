@@ -2,10 +2,12 @@
 using AssetManagement.Inventory.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace AssetManagement.Inventory.API.Controllers
 {
-    [Authorize(Policy = "RequireAdmin")]
+    
+    [Authorize]
     [ApiController]
     [Route("api/areas")]
     public class AreasController : ControllerBase
@@ -17,6 +19,7 @@ namespace AssetManagement.Inventory.API.Controllers
             _areaService = areaService;
         }
 
+        [Authorize(Roles = "Admin, Master")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAreaDto dto)
         {
@@ -32,7 +35,7 @@ namespace AssetManagement.Inventory.API.Controllers
             }
         }
 
-        [Authorize(Policy = "RequireUser")]
+        
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -40,7 +43,7 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok(areas);
         }
 
-        [Authorize(Policy = "RequireUser")]
+        
         [HttpGet("{areaId:guid}/items")]
         public async Task<IActionResult> GetItemsByArea(Guid areaId)
         {

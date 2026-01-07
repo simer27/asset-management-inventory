@@ -32,12 +32,13 @@ namespace AssetManagement.Inventory.API.Controllers
 
         [HttpGet("confirm-email")]
         public async Task<IActionResult> ConfirmEmail(
-        [FromQuery] string userId,
-        [FromQuery] string token)
+            [FromQuery] string userId,
+            [FromQuery] string token)
         {
             await _authService.ConfirmEmailAsync(userId, token);
-            return Ok("E-mail confirmado com sucesso.");
+            return Ok("Email confirmado com sucesso.");
         }
+
 
 
         [HttpPost("resend-confirmation")]
