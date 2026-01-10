@@ -128,5 +128,29 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task RemoveImageAsync(Guid environmentId, Guid imageId)
+        {
+            var environment = await _context.Environments
+                .Include(e => e.Imagens)
+                .FirstOrDefaultAsync(e => e.Id == environmentId);
+
+            if (environment == null)
+                throw new AppException("Ambiente não encontrado.", 404);
+
+            var image = environment.Imagens.FirstOrDefault(i => i.Id == imageId);
+
+            if (image == null)
+                throw new AppException("Imagem não encontrada.", 404);
+
+            // remover arquivo físico
+            var filePath = Path.Combine(_env.WebRootPath, image.FilePath.TrimStart('/'));
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            _context.EnvironmentImages.Remove(image);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

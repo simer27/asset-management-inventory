@@ -11,5 +11,7 @@ namespace AssetManagement.Inventory.API.Services.Interfaces
         Task UpdateAsync(Guid id, CreateEnvironmentDto dto);
         Task DeleteAsync(Guid id);
         Task AddImagesAsync(Guid environmentId, List<IFormFile> imagens);
+        Task RemoveImageAsync(Guid environmentId, Guid imageId);
+
     }
 }

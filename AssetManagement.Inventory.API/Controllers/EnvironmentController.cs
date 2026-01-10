@@ -88,5 +88,17 @@ namespace AssetManagement.Inventory.API.Controllers
             await _service.AddImagesAsync(id, imagens);
             return Ok(new { Message = "Imagens adicionadas com sucesso" });
         }
+
+        /// <summary>
+        /// Remover uma imagem específica de um ambiente
+        /// </summary>
+        [Authorize(Roles = "Admin,Master")]
+        [HttpDelete("{environmentId:guid}/images/{imageId:guid}")]
+        public async Task<IActionResult> RemoveImage(Guid environmentId, Guid imageId)
+        {
+            await _service.RemoveImageAsync(environmentId, imageId);
+            return NoContent();
+        }
+
     }
 }

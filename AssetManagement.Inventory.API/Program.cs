@@ -10,6 +10,9 @@ using AssetManagement.Inventory.API.Services.Email.Implementations;
 using AssetManagement.Inventory.API.Services.Email.Interfaces;
 using AssetManagement.Inventory.API.Services.Implementations;
 using AssetManagement.Inventory.API.Services.Interfaces;
+using AssetManagement.Inventory.API.Validators.Environment;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +27,9 @@ builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateEnvironmentValidator>();
+builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
+
 
 // DATABASE
 builder.Services.AddDbContext<InventoryDbContext>(options =>
