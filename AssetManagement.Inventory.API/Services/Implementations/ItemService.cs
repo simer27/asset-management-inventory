@@ -208,6 +208,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
         //public async Task<byte[]> ExportPdfAsync()
         //{
+        //    Console.WriteLine("AQUI INICIA O PROCESSO DE EXPORTAR");
         //    var itens = await _context.Items
         //        .Include(i => i.Area)
         //        .ToListAsync();
@@ -237,6 +238,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
         //    foreach (var h in headers)
         //    {
+        //        Console.WriteLine("AQUI INICIA O PROCESSO DE HEADERS");
         //        table.AddHeaderCell(
         //            new Cell()
         //                .Add(new Paragraph(h).SetBold())
@@ -251,9 +253,12 @@ namespace AssetManagement.Inventory.API.Services.Implementations
         //        table.AddCell(item.Description ?? "-");
         //        table.AddCell(item.Area?.Name ?? "-");
         //        table.AddCell(item.Quantity.ToString());
+
         //        table.AddCell(item.CreatedAt.ToString("dd/MM/yyyy HH:mm"));
-        //        table.AddCell(item.UpdatedAt.ToString("dd/MM/yyyy HH:mm") ?? "-");
+        //        table.AddCell(item.UpdatedAt.ToString("dd/MM/yyyy HH:mm"));
+
         //    }
+
 
         //    document.Add(table);
         //    document.Close();

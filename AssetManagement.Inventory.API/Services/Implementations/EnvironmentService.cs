@@ -32,13 +32,21 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             return entity;
         }
 
-        public async Task<IEnumerable<EnvironmentEntity>> GetAllAsync()
+        public async Task<IEnumerable<EnvironmentListDto>> GetAllAsync()
         {
             return await _context.Environments
                 .Include(e => e.Imagens)
                 .OrderBy(e => e.Nome)
+                .Select(e => new EnvironmentListDto
+                {
+                    Id = e.Id,
+                    Nome = e.Nome,
+                    Descricao = e.Descricao,
+                    Imagens = e.Imagens.Select(i => i.FilePath).ToList()
+                })
                 .ToListAsync();
         }
+
 
         public async Task<EnvironmentDetailsDto> GetByIdAsync(Guid id)
         {
@@ -94,6 +102,11 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
         public async Task AddImagesAsync(Guid environmentId, List<IFormFile> imagens)
         {
+            Console.WriteLine("🔍 Iniciando upload de imagens...");
+
+            if (imagens == null || !imagens.Any())
+                throw new AppException("Nenhuma imagem enviada.", 400);
+
             var entity = await _context.Environments
                 .Include(e => e.Imagens)
                 .FirstOrDefaultAsync(e => e.Id == environmentId);
@@ -104,6 +117,12 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             if (entity.Imagens.Count + imagens.Count > 5)
                 throw new AppException("Um ambiente pode ter no máximo 5 imagens.", 400);
 
+            // Verificar WebRootPath
+            Console.WriteLine($"WebRootPath: {_env.WebRootPath}");
+
+            if (string.IsNullOrEmpty(_env.WebRootPath))
+                throw new Exception("WebRootPath está NULL. Configure UseStaticFiles() no Program.cs.");
+
             var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "ambientes");
 
             if (!Directory.Exists(uploadDir))
@@ -111,7 +130,10 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
             foreach (var img in imagens)
             {
-                var uniqueName = $"{Guid.NewGuid()}_{img.FileName}";
+                Console.WriteLine($"➡️ Salvando imagem: {img.FileName}");
+
+                var extension = Path.GetExtension(img.FileName);
+                var uniqueName = $"{Guid.NewGuid()}{extension}";
                 var filePath = Path.Combine(uploadDir, uniqueName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -121,13 +143,19 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
                 entity.Imagens.Add(new EnvironmentImage
                 {
+                    FileName = uniqueName,
                     FilePath = $"/uploads/ambientes/{uniqueName}",
                     EnvironmentId = environmentId
                 });
+
+                Console.WriteLine("✔️ Imagem salva no banco.");
             }
 
+
             await _context.SaveChangesAsync();
+            Console.WriteLine("🎉 Upload finalizado com sucesso!");
         }
+
 
         public async Task RemoveImageAsync(Guid environmentId, Guid imageId)
         {
@@ -151,6 +179,26 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             _context.EnvironmentImages.Remove(image);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<EnvironmentImageDto>> GetImagesAsync(Guid environmentId)
+        {
+            var entity = await _context.Environments
+                .Include(e => e.Imagens)
+                .FirstOrDefaultAsync(e => e.Id == environmentId);
+
+            if (entity == null)
+                throw new AppException("Ambiente não encontrado.", 404);
+
+            return entity.Imagens
+                .Select(img => new EnvironmentImageDto
+                {
+                    Id = img.Id,
+                    FileName = img.FileName,
+                    FilePath = img.FilePath
+                })
+                .ToList();
+        }
+
 
     }
 }

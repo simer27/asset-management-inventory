@@ -1,5 +1,4 @@
-﻿using AssetManagement.Inventory.API.DTOs.EnvironmentDto;
-using AssetManagement.Inventory.API.DTOs.Item;
+﻿using AssetManagement.Inventory.API.DTOs.Item;
 using AssetManagement.Inventory.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

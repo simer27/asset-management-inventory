@@ -42,6 +42,7 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok(list);
         }
 
+
         /// <summary>
         /// Buscar ambiente por ID
         /// </summary>
@@ -89,6 +90,7 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok(new { Message = "Imagens adicionadas com sucesso" });
         }
 
+
         /// <summary>
         /// Remover uma imagem específica de um ambiente
         /// </summary>
@@ -99,6 +101,15 @@ namespace AssetManagement.Inventory.API.Controllers
             await _service.RemoveImageAsync(environmentId, imageId);
             return NoContent();
         }
+
+        
+        [HttpGet("{id:guid}/images")]
+        public async Task<IActionResult> GetImages(Guid id)
+        {
+            var imagens = await _service.GetImagesAsync(id);
+            return Ok(imagens);
+        }
+
 
     }
 }

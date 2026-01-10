@@ -1,4 +1,4 @@
-﻿namespace AssetManagement.Inventory.API.DTOs.EnvironmentDto
+﻿namespace AssetManagement.Inventory.API.DTOs.Item
 {
     public class UploadNotaFiscalDto
     {

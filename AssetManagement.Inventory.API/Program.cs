@@ -30,6 +30,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEnvironmentValidator>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
 
+builder.Environment.ContentRootPath = Directory.GetCurrentDirectory();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
 // DATABASE
 builder.Services.AddDbContext<InventoryDbContext>(options =>
