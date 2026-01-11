@@ -28,3 +28,4 @@ namespace AssetManagement.Inventory.API.Validators.Item
                 .WithMessage("O valor médio não pode ser negativo.");
         }
     }
+}

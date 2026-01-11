@@ -19,6 +19,7 @@ namespace AssetManagement.Inventory.API.Infrastructure.Data
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<EnvironmentEntity> Environments { get; set; }
         public DbSet<EnvironmentImage> EnvironmentImages { get; set; }
+        public DbSet<ProofDocumento> Documents { get; set; }
 
 
 
