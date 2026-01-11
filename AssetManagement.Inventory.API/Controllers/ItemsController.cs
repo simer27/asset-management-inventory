@@ -53,12 +53,53 @@ namespace AssetManagement.Inventory.API.Controllers
         }
 
         [Authorize(Roles = "Admin, Master")]
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateItemDto dto)
+        {
+            var result = await _itemService.UpdateAsync(id, dto);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Admin, Master")]
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            await _itemService.DeleteAsync(id);
+            return NoContent();
+        }
+
+
+
+
+        [Authorize(Roles = "Admin, Master")]
         [HttpPost("{id:guid}/nota-fiscal")]
         public async Task<IActionResult> UploadNotaFiscal(Guid id, [FromForm] UploadNotaFiscalDto dto)
         {
             var result = await _itemService.UploadNotaFiscalAsync(id, dto.NotaFiscal);
             return Ok(result);
         }
+
+        [Authorize(Roles = "Admin, Master")]
+        [HttpDelete("{id:guid}/nota-fiscal")]
+        public async Task<IActionResult> DeleteNotaFiscal(Guid id)
+        {
+            await _itemService.DeleteNotaFiscalAsync(id);
+            return NoContent();
+        }
+
+        [Authorize(Roles = "Admin, Master")]
+        [HttpGet("{id:guid}/nota-fiscal")]
+        public async Task<IActionResult> DownloadNotaFiscal(Guid id)
+        {
+            var result = await _itemService.DownloadNotaFiscalAsync(id);
+
+            return File(
+                result.FileBytes,
+                result.ContentType,
+                result.FileName
+            );
+        }
+
 
         [HttpGet("export/excel")]
         public async Task<IActionResult> ExportExcel()

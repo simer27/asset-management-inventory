@@ -114,6 +114,67 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<ItemResponseDto> UpdateAsync(Guid id, UpdateItemDto dto)
+        {
+            var item = await _context.Items
+                .Include(i => i.Area)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (item == null)
+                throw new AppException("Item não encontrado.", 404);
+
+            var area = await _context.Areas.FirstOrDefaultAsync(a => a.Id == dto.AreaId);
+            if (area == null)
+                throw new AppException("Área informada não existe.", 400);
+
+            item.Name = dto.Name;
+            item.Description = dto.Description;
+            item.Quantity = dto.Quantity;
+            item.AreaId = dto.AreaId;
+            item.ValorMedio = dto.ValorMedio;
+            item.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new ItemResponseDto
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Description = item.Description,
+                Quantity = item.Quantity,
+                AreaId = area.Id,
+                AreaName = area.Name,
+                ValorMedio = item.ValorMedio,
+                NotaFiscalCaminho = item.NotaFiscalCaminho,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            };
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var item = await _context.Items.FindAsync(id);
+
+            if (item == null)
+                throw new AppException("Item não encontrado.", 404);
+
+            // Remove arquivo da nota fiscal se existir
+            if (!string.IsNullOrEmpty(item.NotaFiscalCaminho))
+            {
+                var filePath = Path.Combine(
+                    _env.WebRootPath,
+                    item.NotaFiscalCaminho.TrimStart('/')
+                );
+
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
+            }
+
+            _context.Items.Remove(item);
+            await _context.SaveChangesAsync();
+        }
+
+
         public async Task<string> UploadNotaFiscalAsync(Guid itemId, IFormFile file)
         {
             var item = await _context.Items.FindAsync(itemId);
@@ -139,6 +200,65 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             return item.NotaFiscalCaminho;
         }
 
+        public async Task DeleteNotaFiscalAsync(Guid id)
+        {
+            var item = await _context.Items.FindAsync(id);
+
+            if (item == null)
+                throw new AppException("Item não encontrado.", 404);
+
+            if (string.IsNullOrEmpty(item.NotaFiscalCaminho))
+                throw new AppException("Item não possui nota fiscal.", 400);
+
+            var filePath = Path.Combine(
+                _env.WebRootPath,
+                item.NotaFiscalCaminho.TrimStart('/')
+            );
+
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+
+            item.NotaFiscalCaminho = null;
+            item.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<(byte[] FileBytes, string FileName, string ContentType)> DownloadNotaFiscalAsync(Guid itemId)
+        {
+            var item = await _context.Items.FindAsync(itemId);
+
+            if (item == null)
+                throw new AppException("Item não encontrado.", 404);
+
+            if (string.IsNullOrEmpty(item.NotaFiscalCaminho))
+                throw new AppException("Item não possui nota fiscal.", 404);
+
+            var filePath = Path.Combine(
+                _env.WebRootPath,
+                item.NotaFiscalCaminho.TrimStart('/')
+            );
+
+            if (!File.Exists(filePath))
+                throw new AppException("Arquivo da nota fiscal não encontrado.", 404);
+
+            var fileBytes = await File.ReadAllBytesAsync(filePath);
+            var fileName = Path.GetFileName(filePath);
+
+            var contentType = Path.GetExtension(filePath).ToLower() switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".xml" => "application/xml",
+                _ => "application/octet-stream"
+            };
+
+            return (fileBytes, fileName, contentType);
+        }
+
+
         public async Task<byte[]> ExportExcelAsync()
         {
             var items = await _context.Items
@@ -150,7 +270,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 var worksheet = workbook.Worksheets.Add("Lista_de_Itens");
 
                 // === CONFIGURAÇÕES INICIAIS ===
-                worksheet.SheetView.FreezeRows(1); // Congela cabeçalho
+                worksheet.SheetView.FreezeRows(1);
 
                 // === CABEÇALHO ===
                 worksheet.Cell(1, 1).Value = "Item";
@@ -162,7 +282,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
                 var headerRange = worksheet.Range("A1:F1");
                 headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F4E78"); // Azul corporativo
+                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F4E78");
                 headerRange.Style.Font.FontColor = XLColor.White;
                 headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
@@ -185,7 +305,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
                     // Estilo zebra nas linhas
                     if (row % 2 == 0)
-                        range.Style.Fill.BackgroundColor = XLColor.FromHtml("#F2F2F2"); // Cinza claro
+                        range.Style.Fill.BackgroundColor = XLColor.FromHtml("#F2F2F2");
 
                     row++;
                 }
