@@ -10,7 +10,9 @@ using AssetManagement.Inventory.API.Services.Email.Implementations;
 using AssetManagement.Inventory.API.Services.Email.Interfaces;
 using AssetManagement.Inventory.API.Services.Implementations;
 using AssetManagement.Inventory.API.Services.Interfaces;
+using AssetManagement.Inventory.API.Validators.Area;
 using AssetManagement.Inventory.API.Validators.Environment;
+using AssetManagement.Inventory.API.Validators.Item;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,11 +29,17 @@ builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateEnvironmentValidator>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
 
 builder.Environment.ContentRootPath = Directory.GetCurrentDirectory();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+//VALIDAÇÃO COM FLUENTVALIDATOR
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateEnvironmentValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateAreaValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
+
 
 
 // DATABASE
