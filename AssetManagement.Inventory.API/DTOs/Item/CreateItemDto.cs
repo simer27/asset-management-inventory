@@ -1,4 +1,6 @@
-﻿namespace AssetManagement.Inventory.API.DTOs.Item
+﻿using AssetManagement.Inventory.API.Domain.Enums;
+
+namespace AssetManagement.Inventory.API.DTOs.Item
 {
     public class CreateItemDto
     {
@@ -8,6 +10,8 @@
         public decimal? ValorMedio { get; set; }
 
         public string? NotaFiscalCaminho { get; set; }
+
+        public ItemStatus Status { get; set; } = ItemStatus.Ativo;
 
         public Guid AreaId { get; set; }
     }

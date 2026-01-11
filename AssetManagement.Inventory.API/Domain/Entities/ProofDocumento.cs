@@ -9,6 +9,8 @@ namespace AssetManagement.Inventory.API.Domain.Entities
         public string FilePath { get; set; } = null!;
         public DocumentType Type { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
         public DateTime CreatedAt { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

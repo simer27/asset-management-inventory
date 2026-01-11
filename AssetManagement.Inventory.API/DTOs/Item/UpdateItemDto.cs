@@ -1,4 +1,6 @@
-﻿namespace AssetManagement.Inventory.API.DTOs.Item
+﻿using AssetManagement.Inventory.API.Domain.Enums;
+
+namespace AssetManagement.Inventory.API.DTOs.Item
 {
     public class UpdateItemDto
     {
@@ -7,5 +9,6 @@
         public int Quantity { get; set; }
         public Guid AreaId { get; set; }
         public decimal? ValorMedio { get; set; }
+        public ItemStatus Status { get; set; }
     }
 }

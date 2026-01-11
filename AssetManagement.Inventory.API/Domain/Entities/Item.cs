@@ -1,4 +1,6 @@
-﻿namespace AssetManagement.Inventory.API.Domain.Entities
+﻿using AssetManagement.Inventory.API.Domain.Enums;
+
+namespace AssetManagement.Inventory.API.Domain.Entities
 {
     public class Item
     {
@@ -16,7 +18,7 @@
 
         public string? NotaFiscalCaminho { get; set; }
 
-
+        public ItemStatus Status { get; set; } = ItemStatus.Ativo;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

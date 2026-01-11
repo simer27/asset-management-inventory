@@ -52,6 +52,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 Quantity = dto.Quantity,
                 AreaId = dto.AreaId,
                 ValorMedio = dto.ValorMedio,
+                Status = dto.Status,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -87,6 +88,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                     AreaName = i.Area.Name,
                     ValorMedio = i.ValorMedio,
                     NotaFiscalCaminho = i.NotaFiscalCaminho,
+                    Status = i.Status,
                     CreatedAt = i.CreatedAt,
                     UpdatedAt = i.UpdatedAt
                 })
@@ -107,6 +109,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                     AreaId = i.AreaId,
                     AreaName = i.Area.Name,
                     ValorMedio = i.ValorMedio,
+                    Status = i.Status,
                     NotaFiscalCaminho = i.NotaFiscalCaminho,
                     CreatedAt = i.CreatedAt,
                     UpdatedAt = i.UpdatedAt
@@ -132,6 +135,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             item.Quantity = dto.Quantity;
             item.AreaId = dto.AreaId;
             item.ValorMedio = dto.ValorMedio;
+            item.Status = dto.Status;
             item.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -279,8 +283,10 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 worksheet.Cell(1, 4).Value = "Área";
                 worksheet.Cell(1, 5).Value = "Criado em";
                 worksheet.Cell(1, 6).Value = "Atualizado em";
+                worksheet.Cell(1, 7).Value = "Status";
 
-                var headerRange = worksheet.Range("A1:F1");
+
+                var headerRange = worksheet.Range("A1:G1");
                 headerRange.Style.Font.Bold = true;
                 headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#1F4E78");
                 headerRange.Style.Font.FontColor = XLColor.White;
@@ -290,7 +296,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 int row = 2;
                 foreach (var item in items)
                 {
-                    var range = worksheet.Range($"A{row}:F{row}");
+                    var range = worksheet.Range($"A{row}:G{row}");
 
                     worksheet.Cell(row, 1).Value = item.Name;
                     worksheet.Cell(row, 2).Value = item.Description ?? "-";
@@ -302,6 +308,8 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
                     worksheet.Cell(row, 6).Value = item.UpdatedAt;
                     worksheet.Cell(row, 6).Style.DateFormat.Format = "dd/MM/yyyy HH:mm";
+                    worksheet.Cell(row, 7).Value = item.Status.ToString();
+
 
                     // Estilo zebra nas linhas
                     if (row % 2 == 0)
@@ -311,7 +319,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 }
 
                 // === BORDAS NA TABELA ===
-                var tableRange = worksheet.Range($"A1:F{row - 1}");
+                var tableRange = worksheet.Range($"A1:G{row - 1}");
                 tableRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                 tableRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
 
@@ -319,7 +327,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 worksheet.Columns().AdjustToContents();
 
                 // === FILTRO AUTOMÁTICO ===
-                worksheet.Range("A1:F1").SetAutoFilter();
+                worksheet.Range("A1:G1").SetAutoFilter();
 
                 using (var stream = new MemoryStream())
                 {
@@ -402,7 +410,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 }
 
                 // ===== Tabela =====
-                var table = new Table(new float[] { 3, 4, 2, 2 })
+                var table = new Table(new float[] { 3, 4, 2, 2, 3 })
                     .UseAllAvailableWidth();
 
                 // ==== Estilo do cabeçalho ====
@@ -428,6 +436,8 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 AddHeaderCell("Descrição");
                 AddHeaderCell("Quantidade");
                 AddHeaderCell("Valor Médio");
+                AddHeaderCell("Status");
+
 
                 // ==== Estilo das linhas do corpo ====
                 foreach (var item in items)
@@ -461,6 +471,13 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                             .SetTextAlignment(TextAlignment.CENTER)
                             .SetPadding(4)
                     );
+                    table.AddCell(
+                        new Cell()
+                            .Add(new Paragraph(item.Status.ToString()).SetFontSize(9))
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetPadding(4)
+                    );
+
                 }
 
                 document.Add(table);

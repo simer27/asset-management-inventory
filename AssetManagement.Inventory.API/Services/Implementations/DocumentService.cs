@@ -55,6 +55,7 @@ namespace AssetManagement.Inventory.API.Services.Implementations
         public async Task<IEnumerable<DocumentResponseDto>> GetAllAsync()
         {
             return await _context.Documents
+                .Where(d => !d.IsDeleted)
                 .OrderByDescending(d => d.CreatedAt)
                 .Select(d => new DocumentResponseDto
                 {
@@ -123,5 +124,19 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
             return (bytes, contentType, document.FileName);
         }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var document = await _context.Documents.FindAsync(id);
+
+            if (document == null)
+                throw new Exception("Documento não encontrado.");
+
+            document.IsDeleted = true;
+            document.DeletedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }
