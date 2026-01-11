@@ -10,6 +10,10 @@ using iText.Kernel.Pdf;
 using iText.Layout.Element;
 using System.IO;
 using iText.Layout.Properties;
+using iText.IO.Font;
+using iText.IO.Image;
+using iText.Kernel.Colors;
+using iText.Kernel.Font;
 
 
 namespace AssetManagement.Inventory.API.Services.Implementations
@@ -205,66 +209,146 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             }
         }
 
+        public async Task<byte[]> ExportPdfAsync()
+        {
+            var areas = await _context.Areas
+                .Include(a => a.Items)
+                .OrderBy(a => a.Name)
+                .ToListAsync();
 
-        //public async Task<byte[]> ExportPdfAsync()
-        //{
-        //    Console.WriteLine("AQUI INICIA O PROCESSO DE EXPORTAR");
-        //    var itens = await _context.Items
-        //        .Include(i => i.Area)
-        //        .ToListAsync();
+            var stream = new MemoryStream();
 
-        //    using var stream = new MemoryStream();
-        //    var writer = new PdfWriter(stream);
-        //    var pdf = new PdfDocument(writer);
-        //    var document = new Document(pdf);
+            var writer = new PdfWriter(stream);
+            var pdf = new PdfDocument(writer);
+            var document = new Document(pdf);
 
-        //    // Título
-        //    var titulo = new Paragraph("Inventário de Itens")
-        //        .SetFontSize(20)
-        //        .SetBold()
-        //        .SetTextAlignment(TextAlignment.CENTER)
-        //        .SetMarginBottom(20);
+            // ===== Fonte Unicode =====
+            var fontPath = Path.Combine(_env.WebRootPath, "fonts", "DejaVuSans.ttf");
+            if (!File.Exists(fontPath))
+                throw new Exception("Fonte PDF não encontrada em wwwroot/fonts.");
 
-        //    document.Add(titulo);
+            var font = PdfFontFactory.CreateFont(
+                fontPath,
+                PdfEncodings.IDENTITY_H,
+                PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+            );
+            document.SetFont(font);
 
-        //    // Tabela (6 colunas)
-        //    var table = new Table(new float[] { 100, 150, 150, 80, 120, 120 });
-        //    table.SetWidth(UnitValue.CreatePercentValue(100));
+            // ===== Logo =====
+            var logoPath = Path.Combine(_env.WebRootPath, "uploads", "logo", "marca.png");
+            if (File.Exists(logoPath))
+            {
+                var logo = new Image(ImageDataFactory.Create(logoPath))
+                    .SetWidth(90)
+                    .SetHorizontalAlignment(HorizontalAlignment.CENTER)
+                    .SetMarginBottom(10);
 
-        //    // Cabeçalho
-        //    string[] headers = {
-        //    "Nome", "Descrição", "Área", "Qtd", "Criado em", "Atualizado em"
-        //    };
+                document.Add(logo);
+            }
 
-        //    foreach (var h in headers)
-        //    {
-        //        Console.WriteLine("AQUI INICIA O PROCESSO DE HEADERS");
-        //        table.AddHeaderCell(
-        //            new Cell()
-        //                .Add(new Paragraph(h).SetBold())
-        //                .SetTextAlignment(TextAlignment.CENTER)
-        //        );
-        //    }
+            // ===== Título =====
+            document.Add(
+                new Paragraph("Inventário Patrimonial")
+                    .SetFontSize(20)
+                    .SetTextAlignment(TextAlignment.CENTER)
+                    .SetBold()
+                    .SetMarginBottom(20)
+            );
 
-        //    // Linhas
-        //    foreach (var item in itens)
-        //    {
-        //        table.AddCell(item.Name ?? "-");
-        //        table.AddCell(item.Description ?? "-");
-        //        table.AddCell(item.Area?.Name ?? "-");
-        //        table.AddCell(item.Quantity.ToString());
+            // ===== Conteúdo =====
+            foreach (var area in areas)
+            {
+                // Quebra de página entre áreas (exceto a primeira)
+                //if (pdf.GetNumberOfPages() > 0)
+                   // document.Add(new AreaBreak());
 
-        //        table.AddCell(item.CreatedAt.ToString("dd/MM/yyyy HH:mm"));
-        //        table.AddCell(item.UpdatedAt.ToString("dd/MM/yyyy HH:mm"));
+                document.Add(
+                    new Paragraph($"Área: {area.Name}")
+                        .SetFontSize(16)
+                        .SetBold()
+                        .SetMarginBottom(10)
+                );
 
-        //    }
+                var items = area.Items?.OrderBy(i => i.Name).ToList();
 
+                if (items == null || !items.Any())
+                {
+                    document.Add(
+                        new Paragraph("(Nenhum item cadastrado)")
+                            .SetItalic()
+                            .SetMarginBottom(15)
+                    );
+                    continue;
+                }
 
-        //    document.Add(table);
-        //    document.Close();
+                // ===== Tabela =====
+                var table = new Table(new float[] { 3, 4, 2, 2 })
+                    .UseAllAvailableWidth();
 
-        //    return stream.ToArray();
-        //}
+                // ==== Estilo do cabeçalho ====
+                void AddHeaderCell(string text)
+                {
+                    var cell = new Cell()
+                        .Add(new Paragraph(text)
+                            .SetBold()
+                            .SetFontSize(11)
+                            .SetTextAlignment(TextAlignment.CENTER))
+                        .SetBackgroundColor(ColorConstants.LIGHT_GRAY)
+                        .SetVerticalAlignment(VerticalAlignment.MIDDLE)
+                        .SetPaddingTop(5)
+                        .SetPaddingBottom(5)
+                        .SetPaddingLeft(4)
+                        .SetPaddingRight(4)
+                        .SetMinHeight(12);
 
+                    table.AddHeaderCell(cell);
+                }
+
+                AddHeaderCell("Item");
+                AddHeaderCell("Descrição");
+                AddHeaderCell("Quantidade");
+                AddHeaderCell("Valor Médio");
+
+                // ==== Estilo das linhas do corpo ====
+                foreach (var item in items)
+                {
+                    table.AddCell(
+                        new Cell()
+                            .Add(new Paragraph(item.Name ?? "-")
+                                .SetFontSize(9))
+                            .SetPadding(4)
+                    );
+
+                    table.AddCell(
+                        new Cell()
+                            .Add(new Paragraph(item.Description ?? "-")
+                                .SetFontSize(9))
+                            .SetPadding(4)
+                    );
+
+                    table.AddCell(
+                        new Cell()
+                            .Add(new Paragraph(item.Quantity.ToString())
+                                .SetFontSize(9))
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetPadding(4)
+                    );
+
+                    table.AddCell(
+                        new Cell()
+                            .Add(new Paragraph(item.ValorMedio?.ToString("C") ?? "-")
+                                .SetFontSize(9))
+                            .SetTextAlignment(TextAlignment.CENTER)
+                            .SetPadding(4)
+                    );
+                }
+
+                document.Add(table);
+
+            }
+
+            document.Close();
+            return stream.ToArray();
+        }
     }
 }

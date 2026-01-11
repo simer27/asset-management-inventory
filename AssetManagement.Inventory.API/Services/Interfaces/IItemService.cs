@@ -6,12 +6,9 @@ namespace AssetManagement.Inventory.API.Services.Interfaces
     {
         Task<ItemResponseDto> CreateAsync(CreateItemDto dto);
         Task<byte[]> ExportExcelAsync();
-        //Task<byte[]> ExportPdfAsync();
-
+        Task<byte[]> ExportPdfAsync();
         Task<IEnumerable<ItemResponseDto>> GetAllAsync();
-        Task<ItemResponseDto?> GetByIdAsync(Guid id);
-
-        
+        Task<ItemResponseDto?> GetByIdAsync(Guid id);        
         Task<string> UploadNotaFiscalAsync(Guid itemId, IFormFile file);
     }
 }

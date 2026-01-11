@@ -77,17 +77,19 @@ namespace AssetManagement.Inventory.API.Controllers
         }
 
 
-
-        //[HttpGet("export/pdf")]
-        //public async Task<IActionResult> ExportPdf()
-        //{
-        //    var bytes = await _itemService.ExportPdfAsync();
-
-        //    var fileName = $"Inventario_ADBras_Curuca_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-
-        //    return File(bytes, "application/pdf", fileName);
-        //}
-
-
+        [HttpGet("export/pdf")]
+        public async Task<IActionResult> ExportPdf()
+        {
+            try
+            {
+                var pdfBytes = await _itemService.ExportPdfAsync();
+                var fileName = $"Inventario_ADBras_Curuca_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
