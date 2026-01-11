@@ -54,6 +54,64 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                 .ToListAsync();
         }
 
+        public async Task<AreaResponseDto?> GetByIdAsync(Guid id)
+        {
+            return await _context.Areas
+                .Where(a => a.Id == id)
+                .Select(a => new AreaResponseDto
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    TotalItems = a.Items.Count
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<AreaResponseDto> UpdateAsync(Guid id, UpdateAreaDto dto)
+        {
+            var area = await _context.Areas
+                .Include(a => a.Items)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (area == null)
+                throw new Exception("Área não encontrada.");
+
+            var exists = await _context.Areas
+                .AnyAsync(a => a.Name.ToLower() == dto.Name.ToLower() && a.Id != id);
+
+            if (exists)
+                throw new Exception("Já existe uma área com este nome.");
+
+            area.Name = dto.Name;
+
+            await _context.SaveChangesAsync();
+
+            return new AreaResponseDto
+            {
+                Id = area.Id,
+                Name = area.Name,
+                TotalItems = area.Items.Count
+            };
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            var area = await _context.Areas
+                .Include(a => a.Items)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (area == null)
+                throw new Exception("Área não encontrada.");
+
+            if (area.Items.Any())
+                throw new Exception("Não é possível excluir uma área que possui itens.");
+
+            _context.Areas.Remove(area);
+            await _context.SaveChangesAsync();
+        }
+
+
+
         public async Task<IEnumerable<ItemResponseDto>> GetItemsByAreaAsync(Guid areaId)
         {
             var areaExists = await _context.Areas.AnyAsync(a => a.Id == areaId);
@@ -70,6 +128,8 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                     Name = i.Name,
                     Description = i.Description,
                     Quantity = i.Quantity,
+                    ValorMedio = i.ValorMedio,
+                    NotaFiscalCaminho = i.NotaFiscalCaminho,
                     AreaId = i.AreaId,
                     AreaName = i.Area.Name,
                     CreatedAt = i.CreatedAt,

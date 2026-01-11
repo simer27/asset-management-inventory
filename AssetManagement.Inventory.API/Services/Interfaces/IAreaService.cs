@@ -7,6 +7,9 @@ namespace AssetManagement.Inventory.API.Services.Interfaces
     {
         Task<AreaResponseDto> CreateAsync(CreateAreaDto dto);
         Task<IEnumerable<AreaResponseDto>> GetAllAsync();
+        Task<AreaResponseDto?> GetByIdAsync(Guid id);
+        Task<AreaResponseDto> UpdateAsync(Guid id, UpdateAreaDto dto);
+        Task DeleteAsync(Guid id);
         Task<IEnumerable<ItemResponseDto>> GetItemsByAreaAsync(Guid areaId);
 
     }
