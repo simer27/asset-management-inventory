@@ -14,6 +14,7 @@ using iText.IO.Font;
 using iText.IO.Image;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
+using AssetManagement.Inventory.API.Domain.Enums;
 
 
 namespace AssetManagement.Inventory.API.Services.Implementations
@@ -262,6 +263,20 @@ namespace AssetManagement.Inventory.API.Services.Implementations
             return (fileBytes, fileName, contentType);
         }
 
+        public async Task UpdateStatusAsync(Guid itemId, ItemStatus status)
+        {
+            var item = await _context.Items.FindAsync(itemId);
+
+            if (item == null)
+                throw new AppException("Item não encontrado.", 404);
+
+            item.Status = status;
+            item.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+        }
+
+
 
         public async Task<byte[]> ExportExcelAsync()
         {
@@ -308,7 +323,8 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
                     worksheet.Cell(row, 6).Value = item.UpdatedAt;
                     worksheet.Cell(row, 6).Style.DateFormat.Format = "dd/MM/yyyy HH:mm";
-                    worksheet.Cell(row, 7).Value = item.Status.ToString();
+                    worksheet.Cell(row, 7).Value = item.Status.GetDescription();
+
 
 
                     // Estilo zebra nas linhas

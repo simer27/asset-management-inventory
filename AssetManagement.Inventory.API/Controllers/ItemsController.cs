@@ -101,6 +101,15 @@ namespace AssetManagement.Inventory.API.Controllers
         }
 
 
+        [Authorize(Roles = "Admin, Master")]
+        [HttpPatch("{id:guid}/status")]
+        public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdateItemStatusDto dto)
+        {
+            await _itemService.UpdateStatusAsync(id, dto.Status);
+            return NoContent();
+        }
+
+
         [HttpGet("export/excel")]
         public async Task<IActionResult> ExportExcel()
         {

@@ -1,4 +1,5 @@
-﻿using AssetManagement.Inventory.API.DTOs.Item;
+﻿using AssetManagement.Inventory.API.Domain.Enums;
+using AssetManagement.Inventory.API.DTOs.Item;
 
 namespace AssetManagement.Inventory.API.Services.Interfaces
 {
@@ -14,5 +15,7 @@ namespace AssetManagement.Inventory.API.Services.Interfaces
         Task<(byte[] FileBytes, string FileName, string ContentType)> DownloadNotaFiscalAsync(Guid itemId);
         Task DeleteAsync(Guid id);
         Task DeleteNotaFiscalAsync(Guid id);
+        Task UpdateStatusAsync(Guid itemId, ItemStatus status);
+
     }
 }
