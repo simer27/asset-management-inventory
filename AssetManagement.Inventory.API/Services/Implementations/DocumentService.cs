@@ -1,7 +1,9 @@
 ﻿using AssetManagement.Inventory.API.Domain.Entities;
 using AssetManagement.Inventory.API.Domain.Enums;
 using AssetManagement.Inventory.API.DTOs.DocumentDto;
+using AssetManagement.Inventory.API.DTOs.Messaging;
 using AssetManagement.Inventory.API.Infrastructure.Data;
+using AssetManagement.Inventory.API.Messaging.RabbitMQ;
 using AssetManagement.Inventory.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,11 +13,13 @@ namespace AssetManagement.Inventory.API.Services.Implementations
     {
         private readonly InventoryDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IRabbitMqPublisher _rabbitMqPublisher;
 
-        public DocumentService(InventoryDbContext context, IWebHostEnvironment env)
+        public DocumentService(InventoryDbContext context, IWebHostEnvironment env, IRabbitMqPublisher rabbitMqPublisher)
         {
             _context = context;
             _env = env;
+            _rabbitMqPublisher = rabbitMqPublisher;
         }
 
         public async Task<DocumentResponseDto> UploadAsync(UploadDocumentDto dto)
@@ -42,6 +46,20 @@ namespace AssetManagement.Inventory.API.Services.Implementations
 
             _context.Documents.Add(document);
             await _context.SaveChangesAsync();
+
+            if (document.Type == DocumentType.TermoResponsabilidade)
+            {
+                var @event = new TermResponsibilityUploadedEvent
+                {
+                    DocumentId = document.Id,
+                    FileName = document.FileName,
+                    FilePath = document.FilePath,
+                    UploadedAt = document.CreatedAt
+                };
+
+                _rabbitMqPublisher.Publish(@event);
+            }
+
 
             return new DocumentResponseDto
             {

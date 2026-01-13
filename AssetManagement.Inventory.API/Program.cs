@@ -4,6 +4,8 @@ using AssetManagement.Inventory.API.Infrastructure.Data;
 using AssetManagement.Inventory.API.Infrastructure.Middlewares;
 using AssetManagement.Inventory.API.Infrastructure.Middlewares.AssetManagement.Inventory.API.Middlewares;
 using AssetManagement.Inventory.API.Infrastructure.Seed;
+using AssetManagement.Inventory.API.Messaging.Consumers;
+using AssetManagement.Inventory.API.Messaging.RabbitMQ;
 using AssetManagement.Inventory.API.Services.Auth.Implementations;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
 using AssetManagement.Inventory.API.Services.Email.Implementations;
@@ -41,6 +43,13 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEnvironmentValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAreaValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
+
+//SERVIÇO DE MENSSAGERIA
+builder.Services.Configure<RabbitMqSettings>(
+    builder.Configuration.GetSection("RabbitMQ"));
+
+builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+builder.Services.AddHostedService<TermResponsibilityUploadedConsumer>();
 
 
 

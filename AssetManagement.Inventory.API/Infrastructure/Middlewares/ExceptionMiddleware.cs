@@ -1,13 +1,10 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿
 
 namespace AssetManagement.Inventory.API.Infrastructure.Middlewares
 {
     
     using global::AssetManagement.Inventory.API.Exceptions;
     using Microsoft.IdentityModel.Tokens;
-    using System.Net;
-    using System.Text.Json;
 
     namespace AssetManagement.Inventory.API.Middlewares
     {
