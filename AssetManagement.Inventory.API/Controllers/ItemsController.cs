@@ -101,7 +101,6 @@ namespace AssetManagement.Inventory.API.Controllers
         }
 
 
-        [Authorize(Roles = "Admin, Master")]
         [HttpPatch("{id:guid}/status")]
         public async Task<IActionResult> UpdateStatus(Guid id,[FromBody] UpdateItemStatusDto dto)
         {

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AssetManagement.Inventory.API.Infrastructure.Data
 {
-    public class InventoryDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
+    public class InventoryDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
         public InventoryDbContext(DbContextOptions<InventoryDbContext> options) : base(options)
         {

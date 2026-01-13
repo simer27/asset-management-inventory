@@ -1,5 +1,6 @@
 ﻿using AssetManagement.Inventory.API.Domain.Constants;
 using AssetManagement.Inventory.API.Domain.Entities.Identity;
+using AssetManagement.Inventory.API.Domain.Enums;
 using AssetManagement.Inventory.API.DTOs.Auth;
 using AssetManagement.Inventory.API.Exceptions;
 using AssetManagement.Inventory.API.Infrastructure.Data;
@@ -21,15 +22,17 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly InventoryDbContext _context;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
-            IEmailService emailService, IConfiguration configuration, InventoryDbContext context)
+            IEmailService emailService, IConfiguration configuration, InventoryDbContext context, RoleManager<IdentityRole<Guid>> roleManager)
         {
             _userManager = userManager;
             _emailService = emailService;
             _configuration = configuration;
             _context = context;
+            _roleManager = roleManager;
         }
 
         public async Task RegisterAsync(RegisterDto dto)
@@ -281,6 +284,49 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<UserResponseDto>> GetUsersAsync()
+        {
+            var users = await _userManager.Users.ToListAsync();
+            var result = new List<UserResponseDto>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+
+                result.Add(new UserResponseDto
+                {
+                    Id = user.Id,
+                    Email = user.Email!,
+                    UserName = user.UserName!,
+                    Role = roles.FirstOrDefault() ?? "User"
+                });
+            }
+
+            return result;
+        }
+
+        public async Task UpdateUserRoleAsync(Guid userId, string role)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user == null)
+                throw new AppException("Usuário não encontrado.", 404);
+
+            if (await _userManager.IsInRoleAsync(user, "Master"))
+                throw new AppException("Não é permitido alterar o perfil de um usuário Master.", 403);
+
+            if (role == "Master")
+                throw new AppException("Não é permitido promover usuários para Master.", 403);
+
+            if (!await _roleManager.RoleExistsAsync(role))
+                throw new AppException("Perfil inválido.", 400);
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+
+            await _userManager.AddToRoleAsync(user, role);
         }
 
     }

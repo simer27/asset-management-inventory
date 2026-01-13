@@ -1,4 +1,5 @@
-﻿using AssetManagement.Inventory.API.DTOs.Auth;
+﻿using AssetManagement.Inventory.API.Domain.Enums;
+using AssetManagement.Inventory.API.DTOs.Auth;
 
 namespace AssetManagement.Inventory.API.Services.Auth.Interfaces
 {
@@ -13,6 +14,8 @@ namespace AssetManagement.Inventory.API.Services.Auth.Interfaces
         Task ForgotPasswordAsync(ForgotPasswordDto dto);
         Task ResetPasswordAsync(ResetPasswordDto dto);
         Task RevokeAllTokensAsync(Guid userId);
+        Task<IEnumerable<UserResponseDto>> GetUsersAsync();
+        Task UpdateUserRoleAsync(Guid userId, string role);
 
     }
 }

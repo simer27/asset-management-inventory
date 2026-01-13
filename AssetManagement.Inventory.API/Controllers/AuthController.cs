@@ -82,5 +82,21 @@ namespace AssetManagement.Inventory.API.Controllers
             return Ok("Todos os tokens do usuário foram revogados.");
         }
 
+        [Authorize(Roles = "Master")]
+        [HttpGet("users")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var users = await _authService.GetUsersAsync();
+            return Ok(users);
+        }
+
+        [Authorize(Roles = "Master")]
+        [HttpPatch("users/{id:guid}/role")]
+        public async Task<IActionResult> UpdateUserRole(Guid id,[FromBody] UpdateUserRoleDto dto)
+        {
+            await _authService.UpdateUserRoleAsync(id, dto.Role);
+            return NoContent();
+        }
+
     }
 }
