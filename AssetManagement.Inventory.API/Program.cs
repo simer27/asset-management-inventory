@@ -8,10 +8,14 @@ using AssetManagement.Inventory.API.Messaging.Consumers;
 using AssetManagement.Inventory.API.Messaging.RabbitMQ;
 using AssetManagement.Inventory.API.Services.Auth.Implementations;
 using AssetManagement.Inventory.API.Services.Auth.Interfaces;
+using AssetManagement.Inventory.API.Services.Discard.Implementations;
+using AssetManagement.Inventory.API.Services.Discard.Interfaces;
 using AssetManagement.Inventory.API.Services.Email.Implementations;
 using AssetManagement.Inventory.API.Services.Email.Interfaces;
 using AssetManagement.Inventory.API.Services.Implementations;
 using AssetManagement.Inventory.API.Services.Interfaces;
+using AssetManagement.Inventory.API.Services.Notification.Implementations;
+using AssetManagement.Inventory.API.Services.Notification.Interface;
 using AssetManagement.Inventory.API.Validators.Area;
 using AssetManagement.Inventory.API.Validators.Environment;
 using AssetManagement.Inventory.API.Validators.Item;
@@ -34,6 +38,10 @@ builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
+builder.Services.AddHostedService<ItemDiscardRequestedConsumer>();
+builder.Services.AddScoped<IItemDiscardRequestService, ItemDiscardRequestService>();
+
+
 
 builder.Environment.ContentRootPath = Directory.GetCurrentDirectory();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -48,8 +56,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateItemValidator>();
 builder.Services.Configure<RabbitMqSettings>(
     builder.Configuration.GetSection("RabbitMQ"));
 
-builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+builder.Services.AddScoped<IRabbitMqPublisher, RabbitMqPublisher>();
 builder.Services.AddHostedService<TermResponsibilityUploadedConsumer>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 
 
 

@@ -3,6 +3,7 @@ using System;
 using AssetManagement.Inventory.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AssetManagement.Inventory.API.Migrations
 {
     [DbContext(typeof(InventoryDbContext))]
-    partial class InventoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260114034030_AddNotifications")]
+    partial class AddNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -251,6 +254,9 @@ namespace AssetManagement.Inventory.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("RequestedById")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("RequestedByUserId")
                         .HasColumnType("uuid");
 
@@ -261,7 +267,7 @@ namespace AssetManagement.Inventory.API.Migrations
 
                     b.HasIndex("ItemId");
 
-                    b.HasIndex("RequestedByUserId");
+                    b.HasIndex("RequestedById");
 
                     b.ToTable("ItemDiscardRequests");
                 });
@@ -290,6 +296,8 @@ namespace AssetManagement.Inventory.API.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
                 });
@@ -498,13 +506,24 @@ namespace AssetManagement.Inventory.API.Migrations
 
                     b.HasOne("AssetManagement.Inventory.API.Domain.Entities.Identity.ApplicationUser", "RequestedBy")
                         .WithMany()
-                        .HasForeignKey("RequestedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("RequestedById")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Item");
 
                     b.Navigation("RequestedBy");
+                });
+
+            modelBuilder.Entity("AssetManagement.Inventory.API.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("AssetManagement.Inventory.API.Domain.Entities.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

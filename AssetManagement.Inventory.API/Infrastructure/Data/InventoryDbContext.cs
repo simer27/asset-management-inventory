@@ -20,6 +20,9 @@ namespace AssetManagement.Inventory.API.Infrastructure.Data
         public DbSet<EnvironmentEntity> Environments { get; set; }
         public DbSet<EnvironmentImage> EnvironmentImages { get; set; }
         public DbSet<ProofDocumento> Documents { get; set; }
+        public DbSet<ItemDiscardRequest> ItemDiscardRequests { get; set; } = null!;
+        public DbSet<Notification> Notifications { get; set; } = null!;
+
 
 
 
@@ -57,6 +60,17 @@ namespace AssetManagement.Inventory.API.Infrastructure.Data
                       .WithMany()
                       .HasForeignKey(r => r.UserId);
             });
+
+            modelBuilder.Entity<ItemDiscardRequest>()
+               .HasOne(r => r.RequestedBy)
+               .WithMany()
+               .HasForeignKey(r => r.RequestedByUserId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ItemDiscardRequest>()
+                .HasOne(r => r.Item)
+                .WithMany()
+                .HasForeignKey(r => r.ItemId);
 
         }
 

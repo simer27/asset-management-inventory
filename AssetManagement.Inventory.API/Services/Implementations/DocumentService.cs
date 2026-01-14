@@ -3,6 +3,7 @@ using AssetManagement.Inventory.API.Domain.Enums;
 using AssetManagement.Inventory.API.DTOs.DocumentDto;
 using AssetManagement.Inventory.API.DTOs.Messaging;
 using AssetManagement.Inventory.API.Infrastructure.Data;
+using AssetManagement.Inventory.API.Messaging.Constants;
 using AssetManagement.Inventory.API.Messaging.RabbitMQ;
 using AssetManagement.Inventory.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -57,7 +58,10 @@ namespace AssetManagement.Inventory.API.Services.Implementations
                     UploadedAt = document.CreatedAt
                 };
 
-                _rabbitMqPublisher.Publish(@event);
+                _rabbitMqPublisher.Publish(
+                    @event,
+                    RabbitQueues.TermResponsibilityUploaded
+                );
             }
 
 

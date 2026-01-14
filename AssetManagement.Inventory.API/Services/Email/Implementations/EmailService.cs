@@ -21,7 +21,7 @@ namespace AssetManagement.Inventory.API.Services.Email.Implementations
             _userManager = userManager;
         }
 
-        // ✅ MÉTODO QUE JÁ EXISTIA — AGORA CORRETO
+        
         public async Task SendAsync(string to, string subject, string body)
         {
             var email = new MimeMessage();
@@ -51,7 +51,7 @@ namespace AssetManagement.Inventory.API.Services.Email.Implementations
             await smtp.DisconnectAsync(true);
         }
 
-        // ✅ ENVIO AUTOMÁTICO DO TERMO
+        
         public async Task SendTermResponsibilityToAdminsAsync(
             TermResponsibilityUploadedEvent message)
         {

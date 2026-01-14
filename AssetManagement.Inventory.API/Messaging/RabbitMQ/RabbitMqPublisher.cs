@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using AssetManagement.Inventory.API.Messaging.Constants;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -14,7 +15,7 @@ namespace AssetManagement.Inventory.API.Messaging.RabbitMQ
             _settings = options.Value;
         }
 
-        public void Publish<T>(T message)
+        public void Publish<T>(T message, string queueName)
         {
             var factory = new ConnectionFactory
             {
@@ -27,7 +28,7 @@ namespace AssetManagement.Inventory.API.Messaging.RabbitMQ
             using var channel = connection.CreateModel();
 
             channel.QueueDeclare(
-                queue: _settings.QueueName,
+                queue: queueName,
                 durable: true,
                 exclusive: false,
                 autoDelete: false
@@ -37,11 +38,10 @@ namespace AssetManagement.Inventory.API.Messaging.RabbitMQ
 
             channel.BasicPublish(
                 exchange: "",
-                routingKey: _settings.QueueName,
+                routingKey: queueName,
                 basicProperties: null,
                 body: body
             );
         }
     }
-
 }
