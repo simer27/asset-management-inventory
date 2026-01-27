@@ -5,27 +5,35 @@ using Microsoft.AspNetCore.Identity;
 using MimeKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using AssetManagement.Inventory.API.Infrastructure.Settings;
+using Microsoft.Extensions.Options;
 
 namespace AssetManagement.Inventory.API.Services.Email.Implementations
 {
     public class EmailService : IEmailService
     {
-        private readonly IConfiguration _config;
+        private readonly EmailSettings _settings;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public EmailService(
-            IConfiguration config,
-            UserManager<ApplicationUser> userManager)
-        {
-            _config = config;
-            _userManager = userManager;
+        IOptions<EmailSettings> options,
+        UserManager<ApplicationUser> userManager)
+            {
+                _settings = options.Value;
+                _userManager = userManager;
+
+            if (string.IsNullOrWhiteSpace(_settings.Smtp))
+                throw new InvalidOperationException(
+                    "Configuração de Email não encontrada. Verifique o .env"
+                );
         }
 
-        
+
+
         public async Task SendAsync(string to, string subject, string body)
         {
             var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse(_config["Email:From"]!));
+            email.From.Add(MailboxAddress.Parse(_settings.From!));
             email.To.Add(MailboxAddress.Parse(to));
             email.Subject = subject;
 
@@ -37,21 +45,22 @@ namespace AssetManagement.Inventory.API.Services.Email.Implementations
             using var smtp = new SmtpClient();
 
             await smtp.ConnectAsync(
-                _config["Email:Smtp"],
-                int.Parse(_config["Email:Port"]!),
+                _settings.Smtp,
+                _settings.Port,
                 SecureSocketOptions.StartTls
             );
 
             await smtp.AuthenticateAsync(
-                _config["Email:User"],
-                _config["Email:Password"]
+                _settings.User,
+                _settings.Password
             );
 
             await smtp.SendAsync(email);
             await smtp.DisconnectAsync(true);
         }
 
-        
+
+
         public async Task SendTermResponsibilityToAdminsAsync(
             TermResponsibilityUploadedEvent message)
         {
@@ -60,7 +69,8 @@ namespace AssetManagement.Inventory.API.Services.Email.Implementations
             foreach (var admin in admins)
             {
                 var email = new MimeMessage();
-                email.From.Add(MailboxAddress.Parse(_config["Email:From"]!));
+                email.From.Add(MailboxAddress.Parse(_settings.From!));
+
                 email.To.Add(MailboxAddress.Parse(admin.Email!));
                 email.Subject = "Novo Termo de Responsabilidade";
 
@@ -82,15 +92,16 @@ namespace AssetManagement.Inventory.API.Services.Email.Implementations
                 using var smtp = new SmtpClient();
 
                 await smtp.ConnectAsync(
-                    _config["Email:Smtp"],
-                    int.Parse(_config["Email:Port"]!),
+                    _settings.Smtp,
+                    _settings.Port,
                     SecureSocketOptions.StartTls
                 );
 
                 await smtp.AuthenticateAsync(
-                    _config["Email:User"],
-                    _config["Email:Password"]
+                    _settings.User,
+                    _settings.Password
                 );
+
 
                 await smtp.SendAsync(email);
                 await smtp.DisconnectAsync(true);

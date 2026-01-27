@@ -28,6 +28,33 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
+using AssetManagement.Inventory.API.Infrastructure.Settings;
+using DotNetEnv;
+
+Env.Load();
+
+// 🔒 VALIDAÇÃO DE VARIÁVEIS DE AMBIENTE (FAIL FAST)
+string RequireEnv(string key) =>
+    Environment.GetEnvironmentVariable(key)
+    ?? throw new InvalidOperationException(
+        $"Variável de ambiente '{key}' não definida"
+    );
+
+RequireEnv("DB_HOST");
+RequireEnv("DB_PORT");
+RequireEnv("DB_NAME");
+RequireEnv("DB_USER");
+RequireEnv("DB_PASSWORD");
+
+RequireEnv("EMAIL_FROM");
+RequireEnv("EMAIL_SMTP");
+RequireEnv("EMAIL_PORT");
+RequireEnv("EMAIL_USER");
+RequireEnv("EMAIL_PASSWORD");
+
+RequireEnv("JWT_KEY");
+RequireEnv("JWT_ISSUER");
+RequireEnv("JWT_AUDIENCE");
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +67,17 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
 builder.Services.AddHostedService<ItemDiscardRequestedConsumer>();
 builder.Services.AddScoped<IItemDiscardRequestService, ItemDiscardRequestService>();
+
+//EMAIL
+builder.Services.Configure<EmailSettings>(options =>
+{
+    options.From = Environment.GetEnvironmentVariable("EMAIL_FROM");
+    options.Smtp = Environment.GetEnvironmentVariable("EMAIL_SMTP");
+    options.Port = int.Parse(Environment.GetEnvironmentVariable("EMAIL_PORT")!);
+    options.User = Environment.GetEnvironmentVariable("EMAIL_USER");
+    options.Password = Environment.GetEnvironmentVariable("EMAIL_PASSWORD");
+});
+
 
 
 
@@ -64,8 +102,17 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 
 
 // DATABASE
+var connectionString =
+    $"Host={Environment.GetEnvironmentVariable("DB_HOST")};" +
+    $"Port={Environment.GetEnvironmentVariable("DB_PORT")};" +
+    $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+    $"User Id={Environment.GetEnvironmentVariable("DB_USER")};" +
+    $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
+    $"Pooling=true;";
+
 builder.Services.AddDbContext<InventoryDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
+
 
 // IDENTITY
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -81,8 +128,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 .AddDefaultTokenProviders();
 
 // JWT AUTHENTICATION
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSection["Key"]!);
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")!;
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
+var key = Encoding.UTF8.GetBytes(jwtKey);
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -102,8 +153,8 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
 
-        ValidIssuer = jwtSection["Issuer"],
-        ValidAudience = jwtSection["Audience"],
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });

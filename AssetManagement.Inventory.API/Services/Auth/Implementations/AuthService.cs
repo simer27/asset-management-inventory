@@ -20,20 +20,28 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailService _emailService;
-        private readonly IConfiguration _configuration;
         private readonly InventoryDbContext _context;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
         public AuthService(
-            UserManager<ApplicationUser> userManager,
-            IEmailService emailService, IConfiguration configuration, InventoryDbContext context, RoleManager<IdentityRole<Guid>> roleManager)
+        UserManager<ApplicationUser> userManager,
+        IEmailService emailService,
+        InventoryDbContext context,
+        RoleManager<IdentityRole<Guid>> roleManager)
         {
             _userManager = userManager;
             _emailService = emailService;
-            _configuration = configuration;
             _context = context;
             _roleManager = roleManager;
         }
+
+        private static string Env(string key) =>
+        Environment.GetEnvironmentVariable(key)
+        ?? throw new InvalidOperationException(
+            $"Variável de ambiente '{key}' não definida"
+        );
+
+
 
         public async Task RegisterAsync(RegisterDto dto)
         {
@@ -95,7 +103,7 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
                 AccessToken = accessToken,
                 RefreshToken = refreshToken.Token,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(
-                    int.Parse(_configuration["Jwt:ExpiresInMinutes"]!)
+                    int.Parse(Env("JWT_EXPIRES_IN_MINUTES"))
                 )
             };
         }
@@ -120,20 +128,22 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
 
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)
+                Encoding.UTF8.GetBytes(Env("JWT_KEY"))
             );
+
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: Env("JWT_ISSUER"),
+                audience: Env("JWT_AUDIENCE"),
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse(_configuration["Jwt:ExpiresInMinutes"]!)
+                    int.Parse(Env("JWT_EXPIRES_IN_MINUTES"))
                 ),
                 signingCredentials: creds
             );
+
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
@@ -170,7 +180,7 @@ namespace AssetManagement.Inventory.API.Services.Auth.Implementations
                 AccessToken = newAccessToken,
                 RefreshToken = newRefreshToken.Token,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(
-                    int.Parse(_configuration["Jwt:ExpiresInMinutes"]!)
+                    int.Parse(Env("JWT_EXPIRES_IN_MINUTES"))
                 )
             };
         }
